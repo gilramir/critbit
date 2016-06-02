@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-// A KeyValueTuple is returned during an iterate.
+// A KeyValueTuple is returned during an iteration.
 type KeyValueTuple struct {
 	key   string
 	value interface{}

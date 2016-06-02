@@ -6,6 +6,10 @@ a tree of strings. It naturally stores strings in sorted order,
 so they can be also trivially be retrieved from the tree in
 sorted order.
 
+See the on-line Go doc for this package at:
+
+https://godoc.org/github.com/gilramir/critbit
+
 The implementation is novel in that it uses two arrays to
 maintain all nodes, instead of relying on pointers. Aspects
 of this implementation were influenced by:
