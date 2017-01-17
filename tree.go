@@ -39,7 +39,7 @@ func (tree *Critbit) addExternalRef(key string, value interface{}) (uint32, erro
 func (tree *Critbit) deleteExternalRef(refNum uint32) {
 	tree.numExternalRefs--
 	tree.externalRefs[refNum].key = ""
-	tree.externalRefs[refNum].value = int64(tree.firstDeletedRef)
+	tree.externalRefs[refNum].value = uint32(tree.firstDeletedRef)
 	tree.firstDeletedRef = refNum
 }
 
