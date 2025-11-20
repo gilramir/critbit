@@ -98,7 +98,7 @@ func (tree *Critbit) findBestExternalReference(key string) uint32 {
 }
 
 // The caller must ensure that rootItem is valid (either a ref or a node)
-// Returns extRefNum, grandParentNodeNum, grandparentDirection, parentNodeNum, parentDirection, parentIsRoot
+// Returns extRefNum, grandparentNodeNum, grandparentDirection, parentNodeNum, parentDirection, parentIsRoot
 func (tree *Critbit) findBestExternalReferenceWithAncestry(key string) (uint32, uint32, byte, uint32, byte, bool) {
 	// If there is only one ref, then it must be the best choice
 	if tree.numExternalRefs == 1 {

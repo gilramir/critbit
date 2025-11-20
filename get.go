@@ -31,3 +31,25 @@ func (tree *Critbit) findRef(key string) (bool, uint32) {
 		return false, 0
 	}
 }
+
+// Returns ok, refNum, parentNodeNum, parentDirection
+func (tree *Critbit) findRefWithAncestry(key string) (bool, uint32, uint32, byte) {
+	// Is the tree empty? Nothing to find.
+	if len(tree.externalRefs) == 0 {
+		return false, 0, 0, 0
+	}
+
+	// Find the best external reference
+	bestRefNum, _, _, parentNodeNum, parentDirection, _ := tree.findBestExternalReferenceWithAncestry(key)
+
+	// find critical bit, but more importantly, is there
+	// an identical match?
+	identical, _, _, _ := tree.findCriticalBit(bestRefNum, key)
+
+	// Is it already in the tree?
+	if identical {
+		return true, bestRefNum, parentNodeNum, parentDirection
+	} else {
+		return false, 0, 0, 0
+	}
+}

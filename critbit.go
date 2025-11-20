@@ -15,6 +15,9 @@ const (
 	kLeftMask  = 0xcf // 11001111
 	kRightMask = 0xfc // 11111100
 
+	kDirectionLeft  = 0
+	kDirectionRight = 1
+
 	// Since we use a uint32 to keep track of internal nodes and
 	// external references, we can store up to 2^32 of each. One value,
 	// 0xffffffff is used as a "nil" value. If we have N external refs,

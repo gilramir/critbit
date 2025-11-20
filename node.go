@@ -6,7 +6,7 @@ func (node *internalNode) setChild(direction byte, id uint32, childType uint8) {
 }
 
 func (node *internalNode) setChildType(direction byte, childType uint8) {
-	if direction == 0 {
+	if direction == kDirectionLeft {
 		childType <<= 4
 		childType &^= kLeftMask
 		node.flags &= kLeftMask
@@ -19,7 +19,7 @@ func (node *internalNode) setChildType(direction byte, childType uint8) {
 
 func (node *internalNode) getChildType(direction byte) uint8 {
 	var flags uint8
-	if direction == 0 {
+	if direction == kDirectionLeft {
 		flags = node.flags >> 4
 	} else {
 		flags = node.flags
