@@ -45,10 +45,10 @@ https://github.com/glk/critbit
 * **Delete** - delete a key
 * **Dump** - print the trie's representation to stdout, for debugging
 * **Get** - get a key's value
-* **GetKeyValueTuple** - get all key/value tuples
-* **GetKeyValueTuplesFrom** - get key/value tuples starting from a specified
-  key. This only walks the trie downwards, not across, so it's not as
-  comprehensive as you might want. But it can optionally find a partial match.
+* **GetHasPrefix** - find the first key that starts with a prefix,
+    and return the KeyValueTuple
+* **GetKeyValueTuples** - get all key/value tuples
+* **GetKeyValueTupleChan** - get a channel to read all key/value tuples
 * **Insert** - insert a new key/value, without updating an existing key
 * **Keys** - get all keys
 * **Length** - get the number of keys

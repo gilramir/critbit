@@ -1,5 +1,7 @@
 package critbit
 
+import "strings"
+
 // Get finds the key and returns its value. The boolean
 // indicates if it was found or not.
 func (tree *Critbit) Get(key string) (bool, interface{}) {
@@ -8,6 +10,28 @@ func (tree *Critbit) Get(key string) (bool, interface{}) {
 		return false, nil
 	}
 	return true, tree.externalRefs[refNum].value
+}
+
+// Returns the first key that starts with a string, and returns
+// the KeyValueTuple, or nil
+func (tree *Critbit) GetHasPrefix(key string) *KeyValueTuple {
+
+	has, refNum := tree.findRef(key)
+
+	if !has {
+		// Not an exact match, but, did we find something that does start
+		// with our string?
+		foundRefKey := tree.externalRefs[refNum].key
+		if !strings.HasPrefix(foundRefKey, key) {
+			// No, the best ref does not start with the user's key
+			return nil
+		}
+		// keep going!
+	}
+	return &KeyValueTuple{
+		Key:   tree.externalRefs[refNum].key,
+		Value: tree.externalRefs[refNum].value,
+	}
 }
 
 // Returns: ok, refNum

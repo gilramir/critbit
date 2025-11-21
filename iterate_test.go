@@ -18,7 +18,7 @@ func testIterateKeyTuples(c *C, table []string) []string {
 	}
 	// Get the keys
 	var keys []string
-	tupleChan := tree.GetKeyValueTuples()
+	tupleChan := tree.GetKeyValueTupleChan()
 	for keyTuple := range tupleChan {
 		keys = append(keys, keyTuple.Key)
 	}
@@ -85,107 +85,4 @@ func (s *MySuite) TestIterate3(c *C) {
 	keys := testIterateKeyTuples(c, table)
 	c.Check(keys, DeepEquals, []string{"a", "b", "c", "d", "k", "l", "m", "naa",
 		"nab", "nac", "nad", "nba", "o", "p"})
-}
-
-func (s *MySuite) TestGetKeyValueTuplesFrom01(c *C) {
-	// Create it
-	trie := New(0)
-	trie.Insert("red", 1)
-	trie.Insert("red apple", 1)
-	trie.Insert("red box", 1)
-	trie.Insert("red crayon", 1)
-	trie.Insert("blue", 1)
-	trie.Insert("blue arrow", 1)
-	trie.Insert("blue boy", 1)
-	trie.Insert("blue car", 1)
-	trie.Insert("green", 1)
-	trie.Insert("gremlin", 1)
-	trie.Insert("green action", 1)
-	trie.Insert("green babble", 1)
-	trie.Insert("green crown", 1)
-
-	//trie.Dump()
-	has, _ := trie.Get("green")
-	c.Check(has, Equals, true)
-
-	// Starting from leaf, only 1
-	tuples := trie.GetKeyValueTuplesFrom("blue car", true, 3)
-	c.Assert(len(tuples), Equals, 1)
-	c.Check(tuples[0].Key, Equals, "blue car")
-
-	tuples = trie.GetKeyValueTuplesFrom("green", true, 3)
-	c.Assert(len(tuples), Equals, 3)
-	c.Check(tuples[0].Key, Equals, "green")
-	c.Check(tuples[1].Key, Equals, "green action")
-	c.Check(tuples[2].Key, Equals, "green babble")
-
-	tuples = trie.GetKeyValueTuplesFrom("green", true, 4)
-	c.Assert(len(tuples), Equals, 4)
-	c.Check(tuples[0].Key, Equals, "green")
-	c.Check(tuples[1].Key, Equals, "green action")
-	c.Check(tuples[2].Key, Equals, "green babble")
-	c.Check(tuples[3].Key, Equals, "green crown")
-
-	tuples = trie.GetKeyValueTuplesFrom("green", true, 5)
-	c.Assert(len(tuples), Equals, 4)
-	c.Check(tuples[0].Key, Equals, "green")
-	c.Check(tuples[1].Key, Equals, "green action")
-	c.Check(tuples[2].Key, Equals, "green babble")
-	c.Check(tuples[3].Key, Equals, "green crown")
-
-	tuples = trie.GetKeyValueTuplesFrom("green", true, 0)
-	c.Assert(len(tuples), Equals, 4)
-	c.Check(tuples[0].Key, Equals, "green")
-	c.Check(tuples[1].Key, Equals, "green action")
-	c.Check(tuples[2].Key, Equals, "green babble")
-	c.Check(tuples[3].Key, Equals, "green crown")
-
-	// "gr" doesn't match exactly
-	tuples = trie.GetKeyValueTuplesFrom("gr", true, 0)
-	c.Assert(len(tuples), Equals, 0)
-	c.Check(len(tuples), Equals, 0)
-}
-
-func (s *MySuite) TestGetKeyValueTuplesFrom02(c *C) {
-	// Create it
-	trie := New(0)
-	trie.Insert("red", 1)
-	trie.Insert("red apple", 1)
-	trie.Insert("red box", 1)
-	trie.Insert("red crayon", 1)
-	trie.Insert("blue", 1)
-	trie.Insert("blue arrow", 1)
-	trie.Insert("blue boy", 1)
-	trie.Insert("blue car", 1)
-	trie.Insert("green", 1)
-	trie.Insert("gremlin", 1)
-	trie.Insert("green action", 1)
-	trie.Insert("green babble", 1)
-	trie.Insert("green crown", 1)
-
-	//	trie.Dump()
-	has, _ := trie.Get("green")
-	c.Check(has, Equals, true)
-
-	// Check !showExact against actual exact matches
-	tuples := trie.GetKeyValueTuplesFrom("blue car", false, 3)
-	c.Assert(len(tuples), Equals, 1)
-	c.Check(tuples[0].Key, Equals, "blue car")
-
-	tuples = trie.GetKeyValueTuplesFrom("green", false, 3)
-	c.Assert(len(tuples), Equals, 3)
-	c.Check(tuples[0].Key, Equals, "green")
-	c.Check(tuples[1].Key, Equals, "green action")
-	c.Check(tuples[2].Key, Equals, "green babble")
-
-	// Check !showExact against non-exact matches
-	tuples = trie.GetKeyValueTuplesFrom("gr", false, 0)
-	c.Assert(len(tuples), Equals, 4)
-	c.Check(tuples[0].Key, Equals, "green")
-	c.Check(tuples[1].Key, Equals, "green action")
-	c.Check(tuples[2].Key, Equals, "green babble")
-	c.Check(tuples[3].Key, Equals, "green crown")
-	// no gremlin
-
-	// trie.Dump()
 }

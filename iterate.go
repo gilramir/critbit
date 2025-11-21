@@ -3,7 +3,6 @@ package critbit
 import (
 	"fmt"
 	"math"
-	"strings"
 )
 
 // A KeyValueTuple is returned during an iteration.
@@ -93,102 +92,59 @@ func (tree *Critbit) createWalkerItemFromRefNum(refNum uint32) *walkerItem {
 func (tree *Critbit) Keys() []string {
 	// Get the keys
 	var keys []string
-	tupleChan := tree.GetKeyValueTuples()
+	tupleChan := tree.GetKeyValueTupleChan()
 	for keyTuple := range tupleChan {
 		keys = append(keys, keyTuple.Key)
 	}
 	return keys
 }
 
-// GetKeyValueTuples returns a channel that can be read from which contains
+// GetKeyValueTuplesCHan returns a channel that can be read from which contains
 // each key-value pair, in sorted order by the keys.
-func (tree *Critbit) GetKeyValueTuples() chan *KeyValueTuple {
+func (tree *Critbit) GetKeyValueTupleChan() chan *KeyValueTuple {
 	tupleChan := make(chan *KeyValueTuple)
 
-	// Push the first item in the stack
-	stack := tree.newWalkerStack()
-	stack.push(tree.createWalkerItemFromNodeNum(tree.rootItem))
-
-	go tree._iterateKeyTuples(stack, tupleChan)
+	go tree._iterateKeyTuples(tupleChan)
 	return tupleChan
 }
 
-// GetKeyValueTuples return a slice of KeyValueTuples starting from the node
-// corresponding to the key passed in, and then walking the Critbit tree after
-// that. Up at maxCount items, including the first key/value itself, are
-// returned. If maxCount is 0, all items are returned.
-func (tree *Critbit) GetKeyValueTuplesFrom(key string, startExact bool, maxCount int) []*KeyValueTuple {
-	results := make([]*KeyValueTuple, 0)
+// Returns all the KeyValueTuples in key-sorted order.
+func (tree *Critbit) GetKeyValueTuples() []*KeyValueTuple {
+	kvts := make([]*KeyValueTuple, tree.Length())
 
-	has, refNum, parentNodeNum, parentDirection := tree.findRefWithAncestry(key)
-	if !has {
-		if startExact {
-			// User asked for an exact match. It's not. Return now
-			return results
-		} else {
-			// Not an exact match, but, did we find something that does start
-			// with our string?
-			foundRefKey := tree.externalRefs[refNum].key
-			if !strings.HasPrefix(foundRefKey, key) {
-				// No, the best ref does not start with the user's key
-				return results
-			}
-			// keep going!
-		}
-	}
 	tupleChan := make(chan *KeyValueTuple)
+	go tree._iterateKeyTuples(tupleChan)
 
-	// Push the first item in the stack
-	stack := tree.newWalkerStack()
-
-	// If the ref is on the left side, add the right side sibling too, in
-	// case need to walk down that side too
-	if parentDirection == kDirectionLeft {
-		parentNode := tree.internalNodes[parentNodeNum]
-		siblingNodeNum := parentNode.child[kDirectionRight]
-		siblingNodeType := parentNode.getChildType(kDirectionRight)
-		if siblingNodeType == kChildIntNode {
-			stack.push(tree.createWalkerItemFromNodeNum(siblingNodeNum))
-			//			fmt.Printf("added nodenum %d => %+v\n", siblingNodeNum, stack.array[0])
-		} else {
-			stack.push(tree.createWalkerItemFromRefNum(siblingNodeNum))
-			//			fmt.Printf("added refnum %d => %+v\n", siblingNodeNum, stack.array[0])
-		}
-	}
-
-	wi := tree.createWalkerItemFromRefNum(refNum)
-	stack.push(wi)
-	//	fmt.Printf("created walker from refnum %d => %+v\n", refNum, wi)
-
-	go tree._iterateKeyTuplesWithStack(stack, tupleChan, maxCount)
-
+	i := 0
 	for kvt := range tupleChan {
-		results = append(results, kvt)
+		kvts[i] = kvt
+		i++
+	}
+	if i != tree.Length() {
+		panic(fmt.Sprintf("After GetKeyValueTuples, i=%d not %d",
+			i, tree.Length()))
 	}
 
-	return results
+	return kvts
 }
 
-func (tree *Critbit) _iterateKeyTuples(stack *walkerStack, tupleChan chan *KeyValueTuple) {
+func (tree *Critbit) _iterateKeyTuples(tupleChan chan *KeyValueTuple) {
+	defer close(tupleChan)
 	switch tree.rootItemType() {
 	case kChildNil:
 		// Empty tree?
-		close(tupleChan)
 		return
 
 	case kChildExtRef:
 		// One ref?
 		tree.sendKeyTuple(tree.rootItem, tupleChan)
-		close(tupleChan)
 		return
 	}
-	tree._iterateKeyTuplesWithStack(stack, tupleChan, 0)
-}
 
-func (tree *Critbit) _iterateKeyTuplesWithStack(stack *walkerStack, tupleChan chan *KeyValueTuple, maxCount int) {
-	defer close(tupleChan)
+	// Push the first item in the stack
+	stack := tree.newWalkerStack()
+	stack.push(tree.createWalkerItemFromNodeNum(tree.rootItem))
 
-	numSent := 0
 	// Walk the tree
 	for stack.Len() > 0 {
 		/*
@@ -208,11 +164,6 @@ func (tree *Critbit) _iterateKeyTuplesWithStack(stack *walkerStack, tupleChan ch
 			//			fmt.Printf("is leaf\n")
 			tree.sendKeyTuple(walker.itemID, tupleChan)
 
-			// Did we reach our max?
-			numSent++
-			if maxCount > 0 && numSent == maxCount {
-				return
-			}
 		} else {
 			//			fmt.Printf("has children\n")
 			// Push each child
@@ -245,5 +196,8 @@ func (tree *Critbit) _iterateKeyTuplesWithStack(stack *walkerStack, tupleChan ch
 func (tree *Critbit) sendKeyTuple(refNum uint32, tupleChan chan *KeyValueTuple) {
 	ref := &tree.externalRefs[refNum]
 	//	fmt.Printf("sending key=%s value=%v\n", ref.key, ref.value)
-	tupleChan <- &KeyValueTuple{ref.key, ref.value}
+	tupleChan <- &KeyValueTuple{
+		Key:   ref.key,
+		Value: ref.value,
+	}
 }
