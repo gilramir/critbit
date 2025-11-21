@@ -21,6 +21,7 @@ and
 https://github.com/glk/critbit
 
 ## Example
+```
     package main
 
     import (
@@ -38,4 +39,22 @@ https://github.com/glk/critbit
             fmt.Printf("%s = %d\n", kv.Key, kv.Value.(int))
         }
     }
+```
 
+## Methods
+* **Delete** - delete a key
+* **Dump** - print the trie's representation to stdout, for debugging
+* **Get** - get a key's value
+* **GetKeyValueTuple** - get all key/value tuples
+* **GetKeyValueTuplesFrom** - get key/value tuples starting from a specified
+  key. This only walks the trie downwards, not across, so it's not as
+  comprehensive as you might want. But it can optionally find a partial match.
+* **Insert** - insert a new key/value, without updating an existing key
+* **Keys** - get all keys
+* **Length** - get the number of keys
+* **Louds()** - get the LOUDS representation of the trie
+* **MemorySizeBytes** - get an approximation of how much memory the trie is
+  using
+* **SaveDot** - output the tree in graphviz/dot format
+* **SplitAt** - split a trie into 2 tries
+* **Update** - update an existing key's value, without inserting a new key

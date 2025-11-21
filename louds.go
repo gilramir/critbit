@@ -13,7 +13,7 @@ func (s LOUDS) ToBytes() []byte {
 // be returned in the slice. See
 // https://memoria-framework.dev/docs/data-zoo/louds-tree/
 // for an introduction to LOUDS.
-func (tree *Critbit) LoudsSlice() LOUDS {
+func (tree *Critbit) Louds() LOUDS {
 	n := tree.numInternalNodes + tree.numExternalRefs
 	if n == 0 {
 		return LOUDS([]byte{0})

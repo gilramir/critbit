@@ -27,14 +27,14 @@ func (s *MySuite) TestDelete(c *C) {
 		c.Check(ok, Equals, true)
 	}
 	// The final tree looks like this
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1       12    13     6     7     8     9    4         5     2  3 10 11
 		//     ----  -------  -------  -  -------  -  -------  -  -------  -------  -  - -- --
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0})
 
 	ok = tree.Delete(table[6])
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1        6     7     8     9    4         5     2  3 10 11
 		//     ----  -------  -------  -  -------  -  -------  -------  -  - -- --
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0})
@@ -45,40 +45,40 @@ func (s *MySuite) TestDelete(c *C) {
 
 	ok = tree.Delete(table[5])
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1        6     7     8     9    4      5  2  3
 		//     ----  -------  -------  -  -------  -  -------  -  -  -
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0})
 
 	ok = tree.Delete(table[4])
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1        6     7     4     5  2  3
 		//     ----  -------  -------  -  -------  -  -  -
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0})
 
 	ok = tree.Delete(table[3])
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1        4     5  2  3
 		//     ----  -------  -------  -  -  -
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0})
 
 	ok = tree.Delete(table[2])
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1     2  3
 		//     ----  -------  -  -
 		[]byte{1, 0, 1, 1, 0, 0, 0})
 
 	ok = tree.Delete(table[1])
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR   1
 		//     ----  -
 		[]byte{1, 0, 0})
 
 	ok = tree.Delete(table[0])
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals, []byte{0})
+	c.Check(tree.Louds().ToBytes(), DeepEquals, []byte{0})
 }

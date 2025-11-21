@@ -9,7 +9,7 @@ func (s *MySuite) TestInsert(c *C) {
 	// Create it
 	table := make([]string, 7)
 	tree := New(0)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals, []byte{0})
+	c.Check(tree.Louds().ToBytes(), DeepEquals, []byte{0})
 
 	var ok bool
 	var err error
@@ -17,7 +17,7 @@ func (s *MySuite) TestInsert(c *C) {
 	ok, err = tree.Insert(table[0], 0)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR   1
 		//     ----  -
 		[]byte{1, 0, 0})
@@ -26,7 +26,7 @@ func (s *MySuite) TestInsert(c *C) {
 	ok, err = tree.Insert(table[1], 1)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1     2  3
 		//     ----  -------  -  -
 		[]byte{1, 0, 1, 1, 0, 0, 0})
@@ -35,7 +35,7 @@ func (s *MySuite) TestInsert(c *C) {
 	ok, err = tree.Insert(table[2], 2)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1        4     5  2  3
 		//     ----  -------  -------  -  -  -
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0})
@@ -44,7 +44,7 @@ func (s *MySuite) TestInsert(c *C) {
 	ok, err = tree.Insert(table[3], 3)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1        6     7     4     5  2  3
 		//     ----  -------  -------  -  -------  -  -  -
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0})
@@ -53,7 +53,7 @@ func (s *MySuite) TestInsert(c *C) {
 	ok, err = tree.Insert(table[4], 4)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1        6     7     8     9    4      5  2  3
 		//     ----  -------  -------  -  -------  -  -------  -  -  -
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0})
@@ -62,7 +62,7 @@ func (s *MySuite) TestInsert(c *C) {
 	ok, err = tree.Insert(table[5], 5)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1        6     7     8     9    4         5     2  3 10 11
 		//     ----  -------  -------  -  -------  -  -------  -------  -  - -- --
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0})
@@ -76,7 +76,7 @@ func (s *MySuite) TestInsert(c *C) {
 	ok, err = tree.Insert(table[6], 6)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR      1       12    13     6     7     8     9    4         5     2  3 10 11
 		//     ----  -------  -------  -  -------  -  -------  -  -------  -------  -  - -- --
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0})
@@ -91,7 +91,7 @@ func (s *MySuite) TestInsertSecondString(c *C) {
 	// Create it
 	table := make([]string, 3)
 	tree := New(0)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals, []byte{0})
+	c.Check(tree.Louds().ToBytes(), DeepEquals, []byte{0})
 	keys := tree.Keys()
 	c.Assert(err, IsNil)
 	c.Check(keys, IsNil)
@@ -100,7 +100,7 @@ func (s *MySuite) TestInsertSecondString(c *C) {
 	ok, err = tree.Insert(table[0], 0)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR  1
 		//     ---  -
 		[]byte{1, 0, 0})
@@ -112,7 +112,7 @@ func (s *MySuite) TestInsertSecondString(c *C) {
 	ok, err = tree.Insert(table[1], 1)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR    0    1  0
 		//     ---  -----  -  -
 		[]byte{1, 0, 1, 1, 0, 0, 0})
@@ -124,7 +124,7 @@ func (s *MySuite) TestInsertSecondString(c *C) {
 	ok, err = tree.Insert(table[2], 2)
 	c.Assert(err, IsNil)
 	c.Check(ok, Equals, true)
-	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
+	c.Check(tree.Louds().ToBytes(), DeepEquals,
 		//      SR    0      1    0  1  2
 		//     ---  -----  -----  -  -  -
 		[]byte{1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0})
