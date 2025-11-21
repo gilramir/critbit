@@ -24,15 +24,10 @@ func (tree *Critbit) findRef(key string) (bool, uint32) {
 	// an identical match?
 	identical, _, _, _ := tree.findCriticalBit(bestRefNum, key)
 
-	// Is it already in the tree?
-	if identical {
-		return true, bestRefNum
-	} else {
-		return false, 0
-	}
+	return identical, bestRefNum
 }
 
-// Returns ok, refNum, parentNodeNum, parentDirection
+// Returns identicalMatch?, refNum, parentNodeNum, parentDirection
 func (tree *Critbit) findRefWithAncestry(key string) (bool, uint32, uint32, byte) {
 	// Is the tree empty? Nothing to find.
 	if len(tree.externalRefs) == 0 {
@@ -46,10 +41,5 @@ func (tree *Critbit) findRefWithAncestry(key string) (bool, uint32, uint32, byte
 	// an identical match?
 	identical, _, _, _ := tree.findCriticalBit(bestRefNum, key)
 
-	// Is it already in the tree?
-	if identical {
-		return true, bestRefNum, parentNodeNum, parentDirection
-	} else {
-		return false, 0, 0, 0
-	}
+	return identical, bestRefNum, parentNodeNum, parentDirection
 }

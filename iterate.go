@@ -3,6 +3,7 @@ package critbit
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
 // A KeyValueTuple is returned during an iteration.
@@ -116,11 +117,24 @@ func (tree *Critbit) GetKeyValueTuples() chan *KeyValueTuple {
 // corresponding to the key passed in, and then walking the Critbit tree after
 // that. Up at maxCount items, including the first key/value itself, are
 // returned. If maxCount is 0, all items are returned.
-func (tree *Critbit) GetKeyValueTuplesStartingAt(key string, maxCount int) ([]*KeyValueTuple, bool) {
+func (tree *Critbit) GetKeyValueTuplesFrom(key string, startExact bool, maxCount int) []*KeyValueTuple {
+	results := make([]*KeyValueTuple, 0)
 
 	has, refNum, parentNodeNum, parentDirection := tree.findRefWithAncestry(key)
 	if !has {
-		return nil, false
+		if startExact {
+			// User asked for an exact match. It's not. Return now
+			return results
+		} else {
+			// Not an exact match, but, did we find something that does start
+			// with our string?
+			foundRefKey := tree.externalRefs[refNum].key
+			if !strings.HasPrefix(foundRefKey, key) {
+				// No, the best ref does not start with the user's key
+				return results
+			}
+			// keep going!
+		}
 	}
 	tupleChan := make(chan *KeyValueTuple)
 
@@ -135,26 +149,24 @@ func (tree *Critbit) GetKeyValueTuplesStartingAt(key string, maxCount int) ([]*K
 		siblingNodeType := parentNode.getChildType(kDirectionRight)
 		if siblingNodeType == kChildIntNode {
 			stack.push(tree.createWalkerItemFromNodeNum(siblingNodeNum))
-			fmt.Printf("added nodenum %d => %+v\n", siblingNodeNum, stack.array[0])
+			//			fmt.Printf("added nodenum %d => %+v\n", siblingNodeNum, stack.array[0])
 		} else {
 			stack.push(tree.createWalkerItemFromRefNum(siblingNodeNum))
-			fmt.Printf("added refnum %d => %+v\n", siblingNodeNum, stack.array[0])
+			//			fmt.Printf("added refnum %d => %+v\n", siblingNodeNum, stack.array[0])
 		}
 	}
 
 	wi := tree.createWalkerItemFromRefNum(refNum)
 	stack.push(wi)
-	fmt.Printf("created walker from refnum %d => %+v\n", refNum, wi)
+	//	fmt.Printf("created walker from refnum %d => %+v\n", refNum, wi)
 
 	go tree._iterateKeyTuplesWithStack(stack, tupleChan, maxCount)
 
-	results := make([]*KeyValueTuple, 0)
 	for kvt := range tupleChan {
 		results = append(results, kvt)
 	}
 
-	return results, true
-
+	return results
 }
 
 func (tree *Critbit) _iterateKeyTuples(stack *walkerStack, tupleChan chan *KeyValueTuple) {
@@ -179,19 +191,21 @@ func (tree *Critbit) _iterateKeyTuplesWithStack(stack *walkerStack, tupleChan ch
 	numSent := 0
 	// Walk the tree
 	for stack.Len() > 0 {
-		fmt.Printf("Stack len: %d\n", stack.Len())
-		for i, si := range stack.array {
-			fmt.Printf("\t%d: %+v\n", i, si)
-		}
+		/*
+			fmt.Printf("Stack len: %d\n", stack.Len())
+			for i, si := range stack.array {
+				fmt.Printf("\t%d: %+v\n", i, si)
+			}
+		*/
 
 		// Pop
 		walker := stack.pop()
-		fmt.Printf("Popped walker: %+v  isExtRef? %v newLen=%d\n",
-			walker, walker.itemType == kChildExtRef, stack.Len())
+		//		fmt.Printf("Popped walker: %+v  isExtRef? %v newLen=%d\n",
+		//			walker, walker.itemType == kChildExtRef, stack.Len())
 
 		// leaf?
 		if walker.itemType == kChildExtRef {
-			fmt.Printf("is leaf\n")
+			//			fmt.Printf("is leaf\n")
 			tree.sendKeyTuple(walker.itemID, tupleChan)
 
 			// Did we reach our max?
@@ -200,7 +214,7 @@ func (tree *Critbit) _iterateKeyTuplesWithStack(stack *walkerStack, tupleChan ch
 				return
 			}
 		} else {
-			fmt.Printf("has children\n")
+			//			fmt.Printf("has children\n")
 			// Push each child
 			node := &tree.internalNodes[walker.itemID]
 			// Right side pushed first
@@ -225,11 +239,11 @@ func (tree *Critbit) _iterateKeyTuplesWithStack(stack *walkerStack, tupleChan ch
 			}
 		}
 	}
-	fmt.Printf("finished walking tree\n")
+	// fmt.Printf("finished walking tree\n")
 }
 
 func (tree *Critbit) sendKeyTuple(refNum uint32, tupleChan chan *KeyValueTuple) {
 	ref := &tree.externalRefs[refNum]
-	fmt.Printf("sending key=%s value=%v\n", ref.key, ref.value)
+	//	fmt.Printf("sending key=%s value=%v\n", ref.key, ref.value)
 	tupleChan <- &KeyValueTuple{ref.key, ref.value}
 }
