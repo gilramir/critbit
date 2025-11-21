@@ -178,13 +178,14 @@ func (s *MySuite) TestGetKeyValueTuplesFrom02(c *C) {
 	c.Check(tuples[1].Key, Equals, "green action")
 	c.Check(tuples[2].Key, Equals, "green babble")
 
-	// Check non-exact matches
+	// Check !showExact against non-exact matches
 	tuples = trie.GetKeyValueTuplesFrom("gr", false, 0)
 	c.Assert(len(tuples), Equals, 4)
 	c.Check(tuples[0].Key, Equals, "green")
 	c.Check(tuples[1].Key, Equals, "green action")
 	c.Check(tuples[2].Key, Equals, "green babble")
 	c.Check(tuples[3].Key, Equals, "green crown")
+	// no gremlin
 
 	trie.Dump()
 }

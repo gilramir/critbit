@@ -49,8 +49,8 @@ func cmpByteSlice(s1 []byte, s2 []byte) bool {
 }
 
 func compareLouds(tree1 *Critbit, tree2 *Critbit, basename string, name string, n int) bool {
-	louds1 := tree1.LoudsSlice()
-	louds2 := tree2.LoudsSlice()
+	louds1 := tree1.LoudsSlice().ToBytes()
+	louds2 := tree2.LoudsSlice().ToBytes()
 	if !cmpByteSlice(louds1, louds2) {
 		fmt.Printf("Tree 1: %v\n", louds1)
 		fmt.Printf("Tree 2: %v\n", louds2)
@@ -83,7 +83,7 @@ func (s *MySuite) TestSplit1(c *C) {
 		c.Check(ok, Equals, true)
 	}
 	// The final tree looks like this
-	c.Check(tree.LoudsSlice(), DeepEquals,
+	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
 		[]byte{1, 0,
 			1, 1, 0,
 			1, 1, 0, 0,
@@ -119,7 +119,7 @@ func (s *MySuite) TestSplit2(c *C) {
 		c.Check(ok, Equals, true)
 	}
 	// The final tree looks like this
-	c.Check(tree.LoudsSlice(), DeepEquals,
+	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
 		[]byte{1, 0,
 			1, 1, 0,
 			1, 1, 0, 1, 1, 0,
@@ -160,7 +160,7 @@ func (s *MySuite) TestSplit3(c *C) {
 		c.Check(ok, Equals, true)
 	}
 	// The final tree looks like this
-	c.Check(tree.LoudsSlice(), DeepEquals,
+	c.Check(tree.LoudsSlice().ToBytes(), DeepEquals,
 		[]byte{1, 0,
 			1, 1, 0,
 			1, 1, 0, 0,

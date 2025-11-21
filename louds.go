@@ -1,16 +1,22 @@
 package critbit
 
-// LoudsSlice returns a lice of bytes, all of which are either 1 or 0,
+type LOUDS []byte
+
+func (s LOUDS) ToBytes() []byte {
+	return []byte(s)
+}
+
+// LoudsSlice returns a slice of bytes, all of which are either 1 or 0,
 // which represent the tree structure in the LOUDS (level-order unary
 // degree separation) representation, a succinct representation of the tree.
 // Given N nodes (internal nodes + external refs), 2N+1 bytes will
 // be returned in the slice. See
-// http://www.slideshare.net/nokuno/louds-succinct-data-structure
+// https://memoria-framework.dev/docs/data-zoo/louds-tree/
 // for an introduction to LOUDS.
-func (tree *Critbit) LoudsSlice() []byte {
+func (tree *Critbit) LoudsSlice() LOUDS {
 	n := tree.numInternalNodes + tree.numExternalRefs
 	if n == 0 {
-		return []byte{0}
+		return LOUDS([]byte{0})
 	}
 	bits := 2*n + 1
 	answer := make([]byte, 2, bits)
@@ -25,7 +31,7 @@ func (tree *Critbit) LoudsSlice() []byte {
 	for b := range byteChan {
 		answer = append(answer, b)
 	}
-	return answer
+	return LOUDS(answer)
 }
 
 type itemTuple struct {
