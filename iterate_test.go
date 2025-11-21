@@ -187,5 +187,5 @@ func (s *MySuite) TestGetKeyValueTuplesFrom02(c *C) {
 	c.Check(tuples[3].Key, Equals, "green crown")
 	// no gremlin
 
-	trie.Dump()
+	// trie.Dump()
 }
