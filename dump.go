@@ -8,7 +8,7 @@ import (
 )
 
 // Dump prints the structure of the entire tree to stdout.
-func (tree *Critbit) Dump() {
+func (tree *Critbit[T]) Dump() {
 	fmt.Printf("Tree length=%d\n", tree.numExternalRefs)
 	if tree.numExternalRefs == 0 {
 		return
@@ -19,13 +19,13 @@ func (tree *Critbit) Dump() {
 	tree.dumpInternalNode("Root:", tree.rootItem, "")
 }
 
-func (tree *Critbit) dumpExternalRef(title string, refNum uint32, indent string) {
+func (tree *Critbit[T]) dumpExternalRef(title string, refNum uint32, indent string) {
 	// One ref, and it's the root and leaf (no internal nodes)
 	fmt.Printf("%s%s refNum=%d (EXT) key=%s\n", indent,
 		title, refNum, tree.externalRefs[refNum].key)
 }
 
-func (tree *Critbit) dumpInternalNode(title string, nodeNum uint32, indent string) {
+func (tree *Critbit[T]) dumpInternalNode(title string, nodeNum uint32, indent string) {
 	node := &tree.internalNodes[nodeNum]
 	fmt.Printf("%s%s nodeNum=%d (INT) off=%d bit=0x%01x\n", indent,
 		title, nodeNum, node.offset, node.bit)
@@ -58,7 +58,7 @@ func (tree *Critbit) dumpInternalNode(title string, nodeNum uint32, indent strin
 // SaveDot save the tree structure to a graphviz/dot file with the
 // given name. You can run 'dot' on the file to see the graphical
 // representation of the tree.
-func (tree *Critbit) SaveDot(filename string) error {
+func (tree *Critbit[T]) SaveDot(filename string) error {
 	outputFile, err := os.Create(filename)
 	if err != nil {
 		return errors.Wrapf(err, "Opening %s for writing", filename)
@@ -87,7 +87,7 @@ func (tree *Critbit) SaveDot(filename string) error {
 	return nil
 }
 
-func (tree *Critbit) saveDotExternalRef(outputFile *os.File, refNum uint32) error {
+func (tree *Critbit[T]) saveDotExternalRef(outputFile *os.File, refNum uint32) error {
 	var err error
 	name := fmt.Sprintf("ref_%d", refNum)
 
@@ -101,7 +101,7 @@ func (tree *Critbit) saveDotExternalRef(outputFile *os.File, refNum uint32) erro
 	return nil
 }
 
-func (tree *Critbit) saveDotInternalNode(outputFile *os.File, nodeNum uint32) error {
+func (tree *Critbit[T]) saveDotInternalNode(outputFile *os.File, nodeNum uint32) error {
 	var err error
 	name := fmt.Sprintf("node_%d", nodeNum)
 	node := &tree.internalNodes[nodeNum]

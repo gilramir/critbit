@@ -6,7 +6,7 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-func (s *MySuite) testSplit(c *C, tree *Critbit, table []string, name string) {
+func (s *MySuite) testSplit(c *C, tree *Critbit[int64], table []string, name string) {
 	var ok bool
 	var err error
 	var i int64
@@ -16,13 +16,13 @@ func (s *MySuite) testSplit(c *C, tree *Critbit, table []string, name string) {
 		leftSplit, _ := tree.SplitAt(splitAt)
 
 		// Make the natural versions of the trees
-		leftNatural := New(numKeys)
+		leftNatural := New[int64](numKeys)
 		for i = 0; i < int64(splitAt); i++ {
 			ok, err = leftNatural.Insert(table[i], i)
 			c.Assert(err, IsNil)
 			c.Check(ok, Equals, true)
 		}
-		rightNatural := New(numKeys)
+		rightNatural := New[int64](numKeys)
 		for i = int64(splitAt); i < int64(numKeys); i++ {
 			ok, err = rightNatural.Insert(table[i], i)
 			c.Assert(err, IsNil)
@@ -48,7 +48,7 @@ func cmpByteSlice(s1 []byte, s2 []byte) bool {
 	return true
 }
 
-func compareLouds(tree1 *Critbit, tree2 *Critbit, basename string, name string, n int) bool {
+func compareLouds[T any](tree1 *Critbit[T], tree2 *Critbit[T], basename string, name string, n int) bool {
 	louds1 := tree1.Louds().ToBytes()
 	louds2 := tree2.Louds().ToBytes()
 	if !cmpByteSlice(louds1, louds2) {
@@ -64,7 +64,7 @@ func compareLouds(tree1 *Critbit, tree2 *Critbit, basename string, name string, 
 func (s *MySuite) TestSplit1(c *C) {
 	// Create it
 	table := make([]string, 7)
-	tree := New(7)
+	tree := New[int64](7)
 
 	table[0] = "@@@"
 	table[1] = "AAA"
@@ -99,7 +99,7 @@ func (s *MySuite) TestSplit1(c *C) {
 func (s *MySuite) TestSplit2(c *C) {
 	// Create it
 	table := make([]string, 8)
-	tree := New(8)
+	tree := New[int64](8)
 
 	table[0] = "a"
 	table[1] = "b"
@@ -134,7 +134,7 @@ func (s *MySuite) TestSplit2(c *C) {
 func (s *MySuite) TestSplit3(c *C) {
 	// Create it
 	table := make([]string, 14)
-	tree := New(14)
+	tree := New[int64](14)
 
 	table[0] = "a"
 	table[1] = "b"

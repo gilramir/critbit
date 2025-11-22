@@ -38,7 +38,7 @@ func (s *MySuite) TestFindCritBit(c *C) {
 // This tests a fix for the issue #1 that aletheia7 found.
 func (s *MySuite) TestInsertAfterDelete(c *C) {
 	// Create it
-	trie := New(0)
+	trie := New[int](0)
 	trie.Insert("red", 1)
 	trie.Insert("blue", 1)
 	trie.Insert("green", 1)

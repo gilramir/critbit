@@ -6,7 +6,7 @@ import (
 
 func testIterateKeyTuples(c *C, table []string) []string {
 	// Create the tree
-	tree := New(len(table))
+	tree := New[int](len(table))
 	var ok bool
 	var err error
 	i := 0

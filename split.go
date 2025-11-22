@@ -8,13 +8,13 @@ import (
 // Split splits a tree into two trees, each having one half of the key-value pairs.
 // If there is an odd number of keys, the right tree (the second returned tree)
 // will have the extra key-value pair.
-func (tree *Critbit) Split() (*Critbit, *Critbit) {
+func (tree *Critbit[T]) Split() (*Critbit[T], *Critbit[T]) {
 	// Empty, or other trivial cases?
 	switch tree.numExternalRefs {
 	case 0:
-		return tree, New(0)
+		return tree, New[T](0)
 	case 1:
-		return tree, New(0)
+		return tree, New[T](0)
 	case 2:
 		return tree.splitTwoExternalRefs()
 	}
@@ -23,10 +23,10 @@ func (tree *Critbit) Split() (*Critbit, *Critbit) {
 	return tree.SplitAt(leftNumKeys)
 }
 
-func (tree *Critbit) splitTwoExternalRefs() (*Critbit, *Critbit) {
+func (tree *Critbit[T]) splitTwoExternalRefs() (*Critbit[T], *Critbit[T]) {
 	rootNode := &tree.internalNodes[tree.rootItem]
 
-	left := New(1)
+	left := New[T](1)
 	leftRef := &tree.externalRefs[rootNode.child[0]]
 	leftRefNum, err := tree.addExternalRef(leftRef.key, leftRef.value)
 	// An error should not happen because of the size of the tree
@@ -35,7 +35,7 @@ func (tree *Critbit) splitTwoExternalRefs() (*Critbit, *Critbit) {
 	}
 	left.rootItem = leftRefNum
 
-	right := New(1)
+	right := New[T](1)
 	rightRef := &tree.externalRefs[rootNode.child[1]]
 	rightRefNum, err := tree.addExternalRef(rightRef.key, rightRef.value)
 	// An error should not happen because of the size of the tree
@@ -49,16 +49,16 @@ func (tree *Critbit) splitTwoExternalRefs() (*Critbit, *Critbit) {
 // Split splits a tree into two arbitrarily sized trees. The leftNumKeys
 // arguments indicates how many treees the left tree (the first returned tree)
 // should have. The right tree (the second returned tree) will have the rest.
-func (tree *Critbit) SplitAt(leftNumKeys int) (*Critbit, *Critbit) {
-	leftItemChan := make(chan *splitItem)
-	rightItemChan := make(chan *splitItem)
+func (tree *Critbit[T]) SplitAt(leftNumKeys int) (*Critbit[T], *Critbit[T]) {
+	leftItemChan := make(chan *splitItem[T])
+	rightItemChan := make(chan *splitItem[T])
 
 	rightNumKeys := tree.numExternalRefs - leftNumKeys
 	if rightNumKeys < 0 {
 		rightNumKeys = 0
 	}
-	leftTree := New(leftNumKeys)
-	rightTree := New(rightNumKeys)
+	leftTree := New[T](leftNumKeys)
+	rightTree := New[T](rightNumKeys)
 
 	go tree.splitWalkTree(leftNumKeys, leftItemChan, rightItemChan)
 
@@ -71,18 +71,18 @@ func (tree *Critbit) SplitAt(leftNumKeys int) (*Critbit, *Critbit) {
 	return leftTree, rightTree
 }
 
-func (tree *Critbit) splitWalkTree(leftNumKeys int,
-	leftItemChan chan *splitItem, rightItemChan chan *splitItem) {
+func (tree *Critbit[T]) splitWalkTree(leftNumKeys int,
+	leftItemChan chan *splitItem[T], rightItemChan chan *splitItem[T]) {
 
 	defer close(leftItemChan)
 	defer close(rightItemChan)
 
-	state := &splitWalkerState{
+	state := &splitWalkerState[T]{
 		// It's impossible to approximate the longest path in the tree,
 		// but we can use the # of external refs as a pseuco max
-		path:                 make([]*splitItem, 0, tree.numExternalRefs),
+		path:                 make([]*splitItem[T], 0, tree.numExternalRefs),
 		numLeftKeysRemaining: leftNumKeys,
-		channels:             make([]chan *splitItem, 2),
+		channels:             make([]chan *splitItem[T], 2),
 		feedingRight:         leftNumKeys == 0,
 	}
 
@@ -92,16 +92,16 @@ func (tree *Critbit) splitWalkTree(leftNumKeys int,
 	tree.splitWalkTreeRecurse(state)
 }
 
-type splitWalkerState struct {
+type splitWalkerState[T any] struct {
 	visitedRoot          bool
-	path                 []*splitItem
+	path                 []*splitItem[T]
 	numLeftKeysRemaining int
-	channels             []chan *splitItem
+	channels             []chan *splitItem[T]
 	feedingRight         bool
-	channel              chan *splitItem
+	channel              chan *splitItem[T]
 }
 
-func (tree *Critbit) splitWalkTreeRecurse(state *splitWalkerState) {
+func (tree *Critbit[T]) splitWalkTreeRecurse(state *splitWalkerState[T]) {
 	sendPopup := true
 	if state.feedingRight {
 		state.channel = state.channels[1]
@@ -111,7 +111,7 @@ func (tree *Critbit) splitWalkTreeRecurse(state *splitWalkerState) {
 
 	// Just started?
 	if !state.visitedRoot {
-		state.path = append(state.path, &splitItem{
+		state.path = append(state.path, &splitItem[T]{
 			metaType: kSplitItemTreeData,
 			itemType: kChildIntNode,
 			itemID:   tree.rootItem,
@@ -155,16 +155,17 @@ func (tree *Critbit) splitWalkTreeRecurse(state *splitWalkerState) {
 	}
 	// The left reader gets popups only until the # keys hasn't been reached;
 	if sendPopup && (state.feedingRight || state.numLeftKeysRemaining > 0) {
+		popupItem := splitItem[T]{metaType: kSplitItemPopUp}
 		state.channel <- &popupItem
 	}
 }
 
-func (tree *Critbit) createSplitItemFromNodeChild(nodeNum uint32, childDirection byte) *splitItem {
+func (tree *Critbit[T]) createSplitItemFromNodeChild(nodeNum uint32, childDirection byte) *splitItem[T] {
 	node := &tree.internalNodes[nodeNum]
 	itemType := node.getChildType(childDirection)
 	switch itemType {
 	case kChildIntNode:
-		return &splitItem{
+		return &splitItem[T]{
 			metaType:  kSplitItemTreeData,
 			itemType:  kChildIntNode,
 			itemID:    node.child[childDirection],
@@ -176,7 +177,7 @@ func (tree *Critbit) createSplitItemFromNodeChild(nodeNum uint32, childDirection
 		itemID := node.child[childDirection]
 		key := tree.externalRefs[itemID].key
 		value := tree.externalRefs[itemID].value
-		return &splitItem{
+		return &splitItem[T]{
 			metaType:  kSplitItemTreeData,
 			itemType:  kChildExtRef,
 			itemID:    itemID,
@@ -195,7 +196,7 @@ const (
 	kSplitItemPopUp    = 2
 )
 
-type splitItem struct {
+type splitItem[T any] struct {
 	metaType  int
 	newTreeID uint32
 
@@ -208,12 +209,12 @@ type splitItem struct {
 	bit    uint8
 	// If externalRef
 	key   string
-	value interface{}
+	value T
 }
 
 // Clones, but clears newTreeID
-func (item *splitItem) Clone() *splitItem {
-	return &splitItem{
+func (item *splitItem[T]) Clone() *splitItem[T] {
+	return &splitItem[T]{
 		metaType:  item.metaType,
 		itemType:  item.itemType,
 		itemID:    item.itemID,
@@ -225,9 +226,7 @@ func (item *splitItem) Clone() *splitItem {
 	}
 }
 
-var popupItem splitItem = splitItem{metaType: kSplitItemPopUp}
-
-func createLeftSplit(wg *sync.WaitGroup, tree *Critbit, itemChan chan *splitItem) {
+func createLeftSplit[T any](wg *sync.WaitGroup, tree *Critbit[T], itemChan chan *splitItem[T]) {
 	defer wg.Done()
 
 	// Populate the tree
@@ -238,7 +237,7 @@ func createLeftSplit(wg *sync.WaitGroup, tree *Critbit, itemChan chan *splitItem
 	tree.postSplitZipSide(1)
 }
 
-func createRightSplit(wg *sync.WaitGroup, tree *Critbit, itemChan chan *splitItem) {
+func createRightSplit[T any](wg *sync.WaitGroup, tree *Critbit[T], itemChan chan *splitItem[T]) {
 	defer wg.Done()
 
 	// Populate the tree
@@ -249,8 +248,8 @@ func createRightSplit(wg *sync.WaitGroup, tree *Critbit, itemChan chan *splitIte
 	tree.postSplitZipSide(0)
 }
 
-func (tree *Critbit) populateFromSplitChannel(side string, itemChan chan *splitItem) []*splitItem {
-	var path []*splitItem
+func (tree *Critbit[T]) populateFromSplitChannel(side string, itemChan chan *splitItem[T]) []*splitItem[T] {
+	var path []*splitItem[T]
 	for item := range itemChan {
 		if item.metaType == kSplitItemPopUp {
 			path = path[:len(path)-1]
@@ -286,7 +285,7 @@ func (tree *Critbit) populateFromSplitChannel(side string, itemChan chan *splitI
 	return path
 }
 
-func (tree *Critbit) postSplitElideRootIfNeeded(direction byte) {
+func (tree *Critbit[T]) postSplitElideRootIfNeeded(direction byte) {
 	// Walk down from the root, eliding the root as necessary.
 	if tree.rootItemType() == kChildIntNode {
 		rootNode := &tree.internalNodes[tree.rootItem]
@@ -299,7 +298,7 @@ func (tree *Critbit) postSplitElideRootIfNeeded(direction byte) {
 	}
 }
 
-func (tree *Critbit) postSplitZipSide(direction byte) {
+func (tree *Critbit[T]) postSplitZipSide(direction byte) {
 	// Now that we know we don't need to elide the root, walk down
 	// from the root, towards the right, eliding as necessary
 	if tree.rootItemType() != kChildIntNode {

@@ -4,17 +4,18 @@ import "strings"
 
 // Get finds the key and returns its value. The boolean
 // indicates if it was found or not.
-func (tree *Critbit) Get(key string) (bool, interface{}) {
+func (tree *Critbit[T]) Get(key string) (T, bool) {
+	var nilVal T
 	has, refNum := tree.findRef(key)
 	if !has {
-		return false, nil
+		return nilVal, false
 	}
-	return true, tree.externalRefs[refNum].value
+	return tree.externalRefs[refNum].value, true
 }
 
 // Returns the first key that starts with a string, and returns
 // the KeyValueTuple, or nil
-func (tree *Critbit) GetHasPrefix(key string) *KeyValueTuple {
+func (tree *Critbit[T]) GetHasPrefix(key string) *KeyValueTuple[T] {
 
 	has, refNum := tree.findRef(key)
 
@@ -28,14 +29,14 @@ func (tree *Critbit) GetHasPrefix(key string) *KeyValueTuple {
 		}
 		// keep going!
 	}
-	return &KeyValueTuple{
+	return &KeyValueTuple[T]{
 		Key:   tree.externalRefs[refNum].key,
 		Value: tree.externalRefs[refNum].value,
 	}
 }
 
-// Returns: ok, refNum
-func (tree *Critbit) findRef(key string) (bool, uint32) {
+// Returns: found?, refNum
+func (tree *Critbit[T]) findRef(key string) (bool, uint32) {
 	// Is the tree empty? Nothing to find.
 	if len(tree.externalRefs) == 0 {
 		return false, 0
@@ -52,7 +53,7 @@ func (tree *Critbit) findRef(key string) (bool, uint32) {
 }
 
 // Returns identicalMatch?, refNum, parentNodeNum, parentDirection
-func (tree *Critbit) findRefWithAncestry(key string) (bool, uint32, uint32, byte) {
+func (tree *Critbit[T]) findRefWithAncestry(key string) (bool, uint32, uint32, byte) {
 	// Is the tree empty? Nothing to find.
 	if len(tree.externalRefs) == 0 {
 		return false, 0, 0, 0

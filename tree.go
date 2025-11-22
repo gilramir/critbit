@@ -7,7 +7,7 @@ import (
 )
 
 // Returns the node type of the root node
-func (tree *Critbit) rootItemType() byte {
+func (tree *Critbit[T]) rootItemType() byte {
 	switch tree.numExternalRefs {
 	case 0:
 		return kChildNil
@@ -18,32 +18,35 @@ func (tree *Critbit) rootItemType() byte {
 	}
 }
 
-func (tree *Critbit) addExternalRef(key string, value interface{}) (uint32, error) {
+func (tree *Critbit[T]) addExternalRef(key string, value T) (uint32, error) {
 	var refNum uint32
 	if tree.firstDeletedRef == kNilRef {
 		if refNum == kMaxStrings {
 			return 0, errors.Errorf("Critbit is full")
 		}
 		refNum = uint32(len(tree.externalRefs))
-		tree.externalRefs = append(tree.externalRefs, externalRef{key, value})
+		tree.externalRefs = append(tree.externalRefs, externalRef[T]{key, value, 0})
 	} else {
 		refNum = tree.firstDeletedRef
-		tree.firstDeletedRef = tree.externalRefs[refNum].value.(uint32)
+		tree.firstDeletedRef = tree.externalRefs[refNum].nextDeletedRef
 		tree.externalRefs[int(refNum)].key = key
 		tree.externalRefs[int(refNum)].value = value
+		tree.externalRefs[int(refNum)].nextDeletedRef = 0
 	}
 	tree.numExternalRefs++
 	return refNum, nil
 }
 
-func (tree *Critbit) deleteExternalRef(refNum uint32) {
+func (tree *Critbit[T]) deleteExternalRef(refNum uint32) {
+	var nilVal T
 	tree.numExternalRefs--
 	tree.externalRefs[refNum].key = ""
-	tree.externalRefs[refNum].value = uint32(tree.firstDeletedRef)
+	tree.externalRefs[refNum].value = nilVal
+	tree.externalRefs[refNum].nextDeletedRef = tree.firstDeletedRef
 	tree.firstDeletedRef = refNum
 }
 
-func (tree *Critbit) addInternalNode() (uint32, *internalNode) {
+func (tree *Critbit[T]) addInternalNode() (uint32, *internalNode) {
 	var nodeNum uint32
 	if tree.firstDeletedNode == kNilNode {
 		nodeNum = uint32(len(tree.internalNodes))
@@ -54,27 +57,19 @@ func (tree *Critbit) addInternalNode() (uint32, *internalNode) {
 		tree.internalNodes[int(nodeNum)] = internalNode{}
 		tree.internalNodes[int(nodeNum)].child[0] = kNilNode
 		tree.internalNodes[int(nodeNum)].child[1] = kNilNode
-		/*
-		   tree.internalNodes[int(nodeNum)].offset = 0
-		   tree.internalNodes[int(nodeNum)].bit = 0
-		   tree.internalNodes[int(nodeNum)].flags = 0
-		   tree.internalNodes[int(nodeNum)].child[0] = 0
-		   tree.internalNodes[int(nodeNum)].child[1] = 0
-		*/
 	}
 	tree.numInternalNodes++
 	return nodeNum, &tree.internalNodes[nodeNum]
 }
 
-func (tree *Critbit) deleteInternalNode(nodeNum uint32) {
+func (tree *Critbit[T]) deleteInternalNode(nodeNum uint32) {
 	tree.numInternalNodes--
 	tree.internalNodes[nodeNum].child[1] = tree.firstDeletedNode
 	tree.firstDeletedNode = nodeNum
-	//self.dirty = true
 }
 
 // The caller must ensure that rootItem is valid (either a ref or a node)
-func (tree *Critbit) findBestExternalReference(key string) uint32 {
+func (tree *Critbit[T]) findBestExternalReference(key string) uint32 {
 	// If there is only one ref, then it must be the best choice
 	if tree.numExternalRefs == 1 {
 		return tree.rootItem
@@ -99,7 +94,7 @@ func (tree *Critbit) findBestExternalReference(key string) uint32 {
 
 // The caller must ensure that rootItem is valid (either a ref or a node)
 // Returns extRefNum, grandparentNodeNum, grandparentDirection, parentNodeNum, parentDirection, parentIsRoot
-func (tree *Critbit) findBestExternalReferenceWithAncestry(key string) (uint32, uint32, byte, uint32, byte, bool) {
+func (tree *Critbit[T]) findBestExternalReferenceWithAncestry(key string) (uint32, uint32, byte, uint32, byte, bool) {
 	// If there is only one ref, then it must be the best choice
 	if tree.numExternalRefs == 1 {
 		return tree.rootItem, 0, 0, 0, 0, false
@@ -110,7 +105,6 @@ func (tree *Critbit) findBestExternalReferenceWithAncestry(key string) (uint32, 
 	var grandparentDirection byte
 	var parentNodeNum uint32
 	var parentDirection byte
-	//    var direction byte
 
 	nodeNum := tree.rootItem
 	for {
@@ -136,7 +130,7 @@ func (tree *Critbit) findBestExternalReferenceWithAncestry(key string) (uint32, 
 }
 
 // Returns identical, off, bit, ndir, err
-func (tree *Critbit) findCriticalBit(refNum uint32, newKey string) (bool, uint16, byte, byte) {
+func (tree *Critbit[T]) findCriticalBit(refNum uint32, newKey string) (bool, uint16, byte, byte) {
 	return findCriticalBit(tree.externalRefs[refNum].key, newKey)
 }
 
@@ -177,7 +171,7 @@ ByteFound:
 
 // The caller must ensure that there is at least one internal node
 // Returns nodeNum, parentNode, prevDirection, insertAtRoot, finalChildType
-func (tree *Critbit) findBranchNode(off uint16, bit byte,
+func (tree *Critbit[T]) findBranchNode(off uint16, bit byte,
 	key string) (uint32, uint32, byte, bool, byte) {
 	var parentNodeNum uint32 = 0
 	var prevDirection byte

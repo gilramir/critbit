@@ -6,9 +6,9 @@ import (
 )
 
 // A KeyValueTuple is returned during an iteration.
-type KeyValueTuple struct {
+type KeyValueTuple[T any] struct {
 	Key   string
-	Value interface{}
+	Value T
 }
 
 // maybe this should just be externalRef?
@@ -51,7 +51,7 @@ func (s *walkerStack) pop() *walkerItem {
 	panic("pop() of empty stack")
 }
 
-func (tree *Critbit) newWalkerStack() *walkerStack {
+func (tree *Critbit[T]) newWalkerStack() *walkerStack {
 	// The maximum size of the stack is the number of nodes we still
 	// need to visit, which is the height of the tree. The max height
 	// of the tree is bounded by the length of the keys, which goes up
@@ -73,14 +73,14 @@ func (tree *Critbit) newWalkerStack() *walkerStack {
 	}
 }
 
-func (tree *Critbit) createWalkerItemFromNodeNum(nodeNum uint32) *walkerItem {
+func (tree *Critbit[T]) createWalkerItemFromNodeNum(nodeNum uint32) *walkerItem {
 	return &walkerItem{
 		itemType: kChildIntNode,
 		itemID:   nodeNum,
 	}
 }
 
-func (tree *Critbit) createWalkerItemFromRefNum(refNum uint32) *walkerItem {
+func (tree *Critbit[T]) createWalkerItemFromRefNum(refNum uint32) *walkerItem {
 	return &walkerItem{
 		itemType: kChildExtRef,
 		itemID:   refNum,
@@ -89,7 +89,7 @@ func (tree *Critbit) createWalkerItemFromRefNum(refNum uint32) *walkerItem {
 
 // Keys returns a string slice containing all the keys in the tree.
 // The keys are in sorted order.
-func (tree *Critbit) Keys() []string {
+func (tree *Critbit[T]) Keys() []string {
 	// Get the keys
 	var keys []string
 	tupleChan := tree.GetKeyValueTupleChan()
@@ -101,18 +101,18 @@ func (tree *Critbit) Keys() []string {
 
 // GetKeyValueTuplesCHan returns a channel that can be read from which contains
 // each key-value pair, in sorted order by the keys.
-func (tree *Critbit) GetKeyValueTupleChan() chan *KeyValueTuple {
-	tupleChan := make(chan *KeyValueTuple)
+func (tree *Critbit[T]) GetKeyValueTupleChan() chan *KeyValueTuple[T] {
+	tupleChan := make(chan *KeyValueTuple[T])
 
 	go tree._iterateKeyTuples(tupleChan)
 	return tupleChan
 }
 
 // Returns all the KeyValueTuples in key-sorted order.
-func (tree *Critbit) GetKeyValueTuples() []*KeyValueTuple {
-	kvts := make([]*KeyValueTuple, tree.Length())
+func (tree *Critbit[T]) GetKeyValueTuples() []*KeyValueTuple[T] {
+	kvts := make([]*KeyValueTuple[T], tree.Length())
 
-	tupleChan := make(chan *KeyValueTuple)
+	tupleChan := make(chan *KeyValueTuple[T])
 	go tree._iterateKeyTuples(tupleChan)
 
 	i := 0
@@ -128,7 +128,7 @@ func (tree *Critbit) GetKeyValueTuples() []*KeyValueTuple {
 	return kvts
 }
 
-func (tree *Critbit) _iterateKeyTuples(tupleChan chan *KeyValueTuple) {
+func (tree *Critbit[T]) _iterateKeyTuples(tupleChan chan *KeyValueTuple[T]) {
 	defer close(tupleChan)
 	switch tree.rootItemType() {
 	case kChildNil:
@@ -147,25 +147,14 @@ func (tree *Critbit) _iterateKeyTuples(tupleChan chan *KeyValueTuple) {
 
 	// Walk the tree
 	for stack.Len() > 0 {
-		/*
-			fmt.Printf("Stack len: %d\n", stack.Len())
-			for i, si := range stack.array {
-				fmt.Printf("\t%d: %+v\n", i, si)
-			}
-		*/
-
 		// Pop
 		walker := stack.pop()
-		//		fmt.Printf("Popped walker: %+v  isExtRef? %v newLen=%d\n",
-		//			walker, walker.itemType == kChildExtRef, stack.Len())
 
 		// leaf?
 		if walker.itemType == kChildExtRef {
-			//			fmt.Printf("is leaf\n")
 			tree.sendKeyTuple(walker.itemID, tupleChan)
 
 		} else {
-			//			fmt.Printf("has children\n")
 			// Push each child
 			node := &tree.internalNodes[walker.itemID]
 			// Right side pushed first
@@ -190,13 +179,11 @@ func (tree *Critbit) _iterateKeyTuples(tupleChan chan *KeyValueTuple) {
 			}
 		}
 	}
-	// fmt.Printf("finished walking tree\n")
 }
 
-func (tree *Critbit) sendKeyTuple(refNum uint32, tupleChan chan *KeyValueTuple) {
+func (tree *Critbit[T]) sendKeyTuple(refNum uint32, tupleChan chan *KeyValueTuple[T]) {
 	ref := &tree.externalRefs[refNum]
-	//	fmt.Printf("sending key=%s value=%v\n", ref.key, ref.value)
-	tupleChan <- &KeyValueTuple{
+	tupleChan <- &KeyValueTuple[T]{
 		Key:   ref.key,
 		Value: ref.value,
 	}

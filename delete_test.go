@@ -8,7 +8,7 @@ import (
 func (s *MySuite) TestDelete(c *C) {
 	// Create it
 	table := make([]string, 7)
-	tree := New(0)
+	tree := New[int64](0)
 
 	table[0] = "@@@"
 	table[1] = "AAA"

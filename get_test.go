@@ -5,7 +5,7 @@ import (
 )
 
 func (s *MySuite) TestGet01(c *C) {
-	trie := New(0)
+	trie := New[int](0)
 
 	trie.Insert("zoo", 1)
 	trie.Insert("green", 1)
@@ -17,10 +17,10 @@ func (s *MySuite) TestGet01(c *C) {
 	trie.Insert("fan", 1)
 
 	// Exact matches
-	has, _ := trie.Get("gas")
+	_, has := trie.Get("gas")
 	c.Assert(has, Equals, true)
 
-	has, _ = trie.Get("gr")
+	_, has = trie.Get("gr")
 	c.Assert(has, Equals, false)
 
 	// Non-exact matches

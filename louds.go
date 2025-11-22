@@ -13,7 +13,7 @@ func (s LOUDS) ToBytes() []byte {
 // be returned in the slice. See
 // https://memoria-framework.dev/docs/data-zoo/louds-tree/
 // for an introduction to LOUDS.
-func (tree *Critbit) Louds() LOUDS {
+func (tree *Critbit[T]) Louds() LOUDS {
 	n := tree.numInternalNodes + tree.numExternalRefs
 	if n == 0 {
 		return LOUDS([]byte{0})
@@ -40,7 +40,7 @@ type itemTuple struct {
 }
 
 // Walk breadth-first
-func (tree *Critbit) _loudSlice(byteChan chan byte) {
+func (tree *Critbit[T]) _loudSlice(byteChan chan byte) {
 	defer close(byteChan)
 	rootLayer := make([]itemTuple, 1)
 	rootLayer[0].itemID = tree.rootItem
@@ -48,7 +48,7 @@ func (tree *Critbit) _loudSlice(byteChan chan byte) {
 	tree._loudSliceLayer(byteChan, rootLayer)
 }
 
-func (tree *Critbit) _loudSliceLayer(byteChan chan byte, layer []itemTuple) {
+func (tree *Critbit[T]) _loudSliceLayer(byteChan chan byte, layer []itemTuple) {
 	nextLayer := make([]itemTuple, 0)
 
 	for _, item := range layer {
@@ -60,7 +60,7 @@ func (tree *Critbit) _loudSliceLayer(byteChan chan byte, layer []itemTuple) {
 	}
 }
 
-func (tree *Critbit) _loudSliceNode(byteChan chan byte, item itemTuple) []itemTuple {
+func (tree *Critbit[T]) _loudSliceNode(byteChan chan byte, item itemTuple) []itemTuple {
 	switch item.itemType {
 	case kChildNil:
 		panic("not reached")

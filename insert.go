@@ -10,7 +10,7 @@ import (
 // An error value is also returned. An error will occur if the tree
 // is full, or if the string is too long to be inserted.
 // If an error is returned, the boolean value returned will be false.
-func (tree *Critbit) Insert(key string, value interface{}) (bool, error) {
+func (tree *Critbit[T]) Insert(key string, value T) (bool, error) {
 	// Sanity check
 	if len(key) > kMaxStringLength {
 		return false, errors.Errorf("Maximum string length is %d", kMaxStringLength)
@@ -79,7 +79,7 @@ func (tree *Critbit) Insert(key string, value interface{}) (bool, error) {
 }
 
 // Adds the first ref but no node
-func (tree *Critbit) insertFirstString(key string, value interface{}) error {
+func (tree *Critbit[T]) insertFirstString(key string, value T) error {
 	refNum, err := tree.addExternalRef(key, value)
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func (tree *Critbit) insertFirstString(key string, value interface{}) error {
 
 // Adds the first node, and sets the existing single ref as a child,
 // and adds another ref for the other child.
-func (tree *Critbit) insertSecondString(key string, value interface{}, off uint16, bit byte, ndir byte) error {
+func (tree *Critbit[T]) insertSecondString(key string, value T, off uint16, bit byte, ndir byte) error {
 	refNum, err := tree.addExternalRef(key, value)
 	if err != nil {
 		return err

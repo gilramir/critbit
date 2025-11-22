@@ -7,6 +7,6 @@ import (
 
 func (s *MySuite) TestCreate(c *C) {
 	// Create it
-	tree := New(0)
+	tree := New[int](0)
 	tree.Dump()
 }

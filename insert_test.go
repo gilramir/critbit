@@ -8,7 +8,7 @@ import (
 func (s *MySuite) TestInsert(c *C) {
 	// Create it
 	table := make([]string, 7)
-	tree := New(0)
+	tree := New[int](0)
 	c.Check(tree.Louds().ToBytes(), DeepEquals, []byte{0})
 
 	var ok bool
@@ -90,7 +90,7 @@ func (s *MySuite) TestInsertSecondString(c *C) {
 	var err error
 	// Create it
 	table := make([]string, 3)
-	tree := New(0)
+	tree := New[int](0)
 	c.Check(tree.Louds().ToBytes(), DeepEquals, []byte{0})
 	keys := tree.Keys()
 	c.Assert(err, IsNil)

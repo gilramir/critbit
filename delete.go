@@ -6,7 +6,7 @@ import (
 
 // Delete removes the key from the tree. The boolean return value
 // indicates if the key was in the tree.
-func (tree *Critbit) Delete(key string) bool {
+func (tree *Critbit[T]) Delete(key string) bool {
 	// Is the tree empty? Do nothing
 	if tree.numExternalRefs == 0 {
 		return false

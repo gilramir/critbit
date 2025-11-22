@@ -34,11 +34,11 @@ const (
 )
 
 // A Critbit represents one Critbit tree.
-type Critbit struct {
+type Critbit[T any] struct {
 	totalStringSize int
 
 	internalNodes []internalNode
-	externalRefs  []externalRef
+	externalRefs  []externalRef[T]
 
 	numInternalNodes int    // num used, not num allocated
 	numExternalRefs  int    // num used, not num allocated
@@ -50,13 +50,14 @@ type Critbit struct {
 type internalNode struct {
 	offset uint16
 	bit    uint8
-	flags  uint8     // dirty, leftChildType=(nil|int|ext), rightChildType=(nil|int|ext)
+	flags  uint8     // leftChildType=(nil|int|ext), rightChildType=(nil|int|ext)
 	child  [2]uint32 // if deleted, child[1] = nextDeleted
 }
 
-type externalRef struct {
-	key   string
-	value interface{} // if deleted, uint32 pointing to nextDeleted
+type externalRef[T any] struct {
+	key            string
+	value          T
+	nextDeletedRef uint32 // if deleted, uint32 pointing to nextDeleted
 }
 
 // New allocates a new Critbit tree and returns a pointer to it.
@@ -64,7 +65,7 @@ type externalRef struct {
 // if you happen to know that a tree will contain a certain amount of
 // strings. This is for efficiency only; capacityStrings does not impose any
 // limit on the number of strings.
-func New(capacityStrings int) *Critbit {
+func New[T any](capacityStrings int) *Critbit[T] {
 	// For every external ref (string), we need one branching (internal) node,
 	// except for the very first external ref (hence, the minus one).
 	var capacityInternalNodes int = 0
@@ -72,9 +73,9 @@ func New(capacityStrings int) *Critbit {
 		capacityInternalNodes = capacityStrings - 1
 	}
 
-	return &Critbit{
+	return &Critbit[T]{
 		internalNodes:    make([]internalNode, 0, capacityInternalNodes),
-		externalRefs:     make([]externalRef, 0, capacityStrings),
+		externalRefs:     make([]externalRef[T], 0, capacityStrings),
 		firstDeletedNode: kNilNode,
 		firstDeletedRef:  kNilRef,
 	}
@@ -83,15 +84,6 @@ func New(capacityStrings int) *Critbit {
 // Length returns the number of keys currently stored in the tree. More space for
 // keys may have been allocated, if keys were deleted and no other
 // keys were inserted.
-func (tree *Critbit) Length() int {
+func (tree *Critbit[T]) Length() int {
 	return tree.numExternalRefs
-}
-
-// MemorySize returns the approximate number of bytes used used
-// by the tree.
-func (tree *Critbit) MemorySizeBytes() int {
-	return 4*8 + 12 + // static part of Critbit
-		(20 * len(tree.internalNodes)) +
-		(8 * len(tree.externalRefs)) +
-		tree.totalStringSize
 }
