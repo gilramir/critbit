@@ -56,5 +56,6 @@ https://github.com/glk/critbit
 * **MemorySizeBytes** - get an approximation of how much memory the trie is
   using
 * **SaveDot** - output the tree in graphviz/dot format
-* **SplitAt** - split a trie into 2 tries
+* **Split** - split a trie into 2 even tries
+* **SplitAt** - split a trie into 2 tries at any key
 * **Update** - update an existing key's value, without inserting a new key
