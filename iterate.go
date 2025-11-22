@@ -1,7 +1,9 @@
 package critbit
 
 import (
+	"context"
 	"fmt"
+	"iter"
 	"math"
 )
 
@@ -92,7 +94,8 @@ func (tree *Critbit[T]) createWalkerItemFromRefNum(refNum uint32) *walkerItem {
 func (tree *Critbit[T]) Keys() []string {
 	// Get the keys
 	var keys []string
-	tupleChan := tree.GetKeyValueTupleChan()
+	tupleChan, cancel := tree.GetKeyValueTupleChan()
+	defer cancel()
 	for keyTuple := range tupleChan {
 		keys = append(keys, keyTuple.Key)
 	}
@@ -100,20 +103,36 @@ func (tree *Critbit[T]) Keys() []string {
 }
 
 // GetKeyValueTuplesCHan returns a channel that can be read from which contains
-// each key-value pair, in sorted order by the keys.
-func (tree *Critbit[T]) GetKeyValueTupleChan() chan *KeyValueTuple[T] {
+// each key-value pair, in sorted order by the keys. It also returns a cancel
+// function which you need to call when you're done reading.
+func (tree *Critbit[T]) GetKeyValueTupleChan() (chan *KeyValueTuple[T], context.CancelFunc) {
 	tupleChan := make(chan *KeyValueTuple[T])
 
-	go tree._iterateKeyTuples(tupleChan)
-	return tupleChan
+	ctx, cancel := context.WithCancel(context.Background())
+	go tree._iterateKeyTuples(ctx, tupleChan)
+	return tupleChan, cancel
+}
+
+// Returns an iterator overy (key, value)
+func (tree *Critbit[T]) IterateItems() iter.Seq2[string, T] {
+	return func(yield func(string, T) bool) {
+		ch, cancel := tree.GetKeyValueTupleChan()
+		for kvt := range ch {
+			if !yield(kvt.Key, kvt.Value) {
+				cancel()
+				return
+			}
+		}
+		cancel()
+	}
 }
 
 // Returns all the KeyValueTuples in key-sorted order.
 func (tree *Critbit[T]) GetKeyValueTuples() []*KeyValueTuple[T] {
 	kvts := make([]*KeyValueTuple[T], tree.Length())
 
-	tupleChan := make(chan *KeyValueTuple[T])
-	go tree._iterateKeyTuples(tupleChan)
+	tupleChan, cancel := tree.GetKeyValueTupleChan()
+	defer cancel()
 
 	i := 0
 	for kvt := range tupleChan {
@@ -128,7 +147,7 @@ func (tree *Critbit[T]) GetKeyValueTuples() []*KeyValueTuple[T] {
 	return kvts
 }
 
-func (tree *Critbit[T]) _iterateKeyTuples(tupleChan chan *KeyValueTuple[T]) {
+func (tree *Critbit[T]) _iterateKeyTuples(ctx context.Context, tupleChan chan *KeyValueTuple[T]) {
 	defer close(tupleChan)
 	switch tree.rootItemType() {
 	case kChildNil:
@@ -137,7 +156,7 @@ func (tree *Critbit[T]) _iterateKeyTuples(tupleChan chan *KeyValueTuple[T]) {
 
 	case kChildExtRef:
 		// One ref?
-		tree.sendKeyTuple(tree.rootItem, tupleChan)
+		tree.sendKeyTuple(ctx, tree.rootItem, tupleChan)
 		return
 	}
 
@@ -147,12 +166,16 @@ func (tree *Critbit[T]) _iterateKeyTuples(tupleChan chan *KeyValueTuple[T]) {
 
 	// Walk the tree
 	for stack.Len() > 0 {
+
 		// Pop
 		walker := stack.pop()
 
 		// leaf?
 		if walker.itemType == kChildExtRef {
-			tree.sendKeyTuple(walker.itemID, tupleChan)
+			keepGoing := tree.sendKeyTuple(ctx, walker.itemID, tupleChan)
+			if !keepGoing {
+				return
+			}
 
 		} else {
 			// Push each child
@@ -181,10 +204,18 @@ func (tree *Critbit[T]) _iterateKeyTuples(tupleChan chan *KeyValueTuple[T]) {
 	}
 }
 
-func (tree *Critbit[T]) sendKeyTuple(refNum uint32, tupleChan chan *KeyValueTuple[T]) {
+// Returns 'keepGoing'
+func (tree *Critbit[T]) sendKeyTuple(ctx context.Context, refNum uint32, tupleChan chan *KeyValueTuple[T]) bool {
 	ref := &tree.externalRefs[refNum]
-	tupleChan <- &KeyValueTuple[T]{
+	kvt := &KeyValueTuple[T]{
 		Key:   ref.key,
 		Value: ref.value,
+	}
+	select {
+	case <-ctx.Done():
+		// Caller told us to cancel
+		return false
+	case tupleChan <- kvt:
+		return true
 	}
 }

@@ -50,6 +50,7 @@ https://github.com/glk/critbit
 * **GetKeyValueTuples** - get all key/value tuples
 * **GetKeyValueTupleChan** - get a channel to read all key/value tuples
 * **Insert** - insert a new key/value, without updating an existing key
+* **IterateItems** - returns an iterator over all key/value pairs, in order
 * **Keys** - get all keys
 * **Length** - get the number of keys
 * **Louds** - get the LOUDS representation of the trie

@@ -18,7 +18,8 @@ func testIterateKeyTuples(c *C, table []string) []string {
 	}
 	// Get the keys
 	var keys []string
-	tupleChan := tree.GetKeyValueTupleChan()
+	tupleChan, cancel := tree.GetKeyValueTupleChan()
+	defer cancel()
 	for keyTuple := range tupleChan {
 		keys = append(keys, keyTuple.Key)
 	}
