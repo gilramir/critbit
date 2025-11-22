@@ -52,10 +52,12 @@ https://github.com/glk/critbit
 * **Insert** - insert a new key/value, without updating an existing key
 * **Keys** - get all keys
 * **Length** - get the number of keys
-* **Louds()** - get the LOUDS representation of the trie
+* **Louds** - get the LOUDS representation of the trie
 * **MemorySizeBytes** - get an approximation of how much memory the trie is
   using
 * **SaveDot** - output the tree in graphviz/dot format
 * **Split** - split a trie into 2 even tries
-* **SplitAt** - split a trie into 2 tries at any key
+* **SplitAt** - split a trie into 2 tries of any size
 * **Update** - update an existing key's value, without inserting a new key
+* **Upsert** - insert a new key/value, but if it exists already, update the
+ existing key's value
